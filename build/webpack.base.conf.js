@@ -3,6 +3,13 @@ const path = require('path')
 const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
+const glob = require('glob');
+
+const entriesOther = getEntry('./src/pages/**/*.js'); // 获得入口js文件
+const entries = Object.assign({
+	app:'./src/main.js'
+},entriesOther);
+console.log(JSON.stringify(entries))
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
@@ -19,11 +26,23 @@ const createLintingRule = () => ({
   }
 })
 
+function getEntry(globPath) {
+  var entries = {},
+    basename, tmp, pathname;
+
+  glob.sync(globPath).forEach(function (entry) {
+    basename = path.basename(entry, path.extname(entry));
+    tmp = entry.split('/').splice(-3);
+    pathname = tmp.splice(1, 1) // 正确输出js和html的路径
+    entries[pathname] = entry;
+  });
+  
+  return entries;
+}
+
 module.exports = {
   context: path.resolve(__dirname, '../'),
-  entry: {
-    app: './src/main.js'
-  },
+  entry: entries,
   output: {
     path: config.build.assetsRoot,
     filename: '[name].js',
@@ -56,7 +75,7 @@ module.exports = {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url-loader',
         options: {
-          limit: 10000,
+          limit: 1,
           name: utils.assetsPath('img/[name].[ext]')
         }
       },

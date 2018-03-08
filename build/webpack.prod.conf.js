@@ -10,6 +10,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const glob = require('glob')
 
 const env = process.env.NODE_ENV === 'testing'
   ? require('../config/test.env')
@@ -20,7 +21,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     rules: utils.styleLoaders({
       sourceMap: config.build.productionSourceMap,
       extract: true,
-      usePostCSS: true
+      usePostCSS: true 
     })
   },
   devtool: config.build.productionSourceMap ? config.build.devtool : false,
@@ -144,6 +145,39 @@ if (config.build.productionGzip) {
 if (config.build.bundleAnalyzerReport) {
   const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
   webpackConfig.plugins.push(new BundleAnalyzerPlugin())
+}
+
+function getEntry(globPath) {
+  var entries = {},
+    basename, tmp, pathname;
+
+  glob.sync(globPath).forEach(function (entry) {
+    basename = path.basename(entry, path.extname(entry));
+    tmp = entry.split('/').splice(-3);
+    pathname = tmp.splice(1, 1) // 正确输出js和html的路径
+    entries[pathname] = entry;
+  });
+  
+  return entries;
+}
+
+var pages = getEntry('./src/pages/**/index.html');
+for(var pathname in pages){
+	// 配置生成的html文件，定义路径等
+	const conf = {
+		filename: pathname + '.html',
+		template: pages[pathname], //模板路径
+		inject: true, //js插入位置
+		chunks: [pathname],
+		chunksSortMode: 'dependency'
+	};
+	
+	if(pathname in module.exports.entry){
+		conf.chunks = ['manifest','vendor',pathname];
+		conf.hash = true;
+	}
+	
+	webpackConfig.plugins.push(new HtmlWebpackPlugin(conf));
 }
 
 module.exports = webpackConfig

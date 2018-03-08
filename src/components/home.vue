@@ -6,6 +6,7 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import img from '../images/1-1.jpg'
 export default {
 	name: 'itemcontainer',
 	data() {
@@ -19,12 +20,17 @@ export default {
 	created(){
 		//初始化信息
 		//this.initializeData();
-		document.body.style.backgroundImage = 'url(./static/img/1-1.jpg)';
+		document.body.style.backgroundImage = 'url('+img+')';
+		document.body.style.backgroundSize = 'cover';
 	}
 }
 </script>
 
 <style lang="less">
+	/*body{
+		background: url(../images/1-1.jpg) no-repeat;
+		background-size: contain;
+	}*/
 	.top_tips{
 		position: absolute;
 		height: 7.35rem;

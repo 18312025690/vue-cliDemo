@@ -9,6 +9,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
+const glob = require('glob')
 
 const HOST = process.env.HOST
 const PORT = process.env.PORT && Number(process.env.PORT)
@@ -55,7 +56,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: 'index.html',
-      inject: true
+      inject: true,
+      chunks: ['app'],
     }),
     // copy custom static assets
     new CopyWebpackPlugin([
@@ -67,6 +69,36 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     ])
   ]
 })
+
+
+function getEntry(globPath) {
+  var entries = {},
+    basename, tmp, pathname;
+
+  glob.sync(globPath).forEach(function (entry) {
+    basename = path.basename(entry, path.extname(entry));
+    tmp = entry.split('/').splice(-3);
+    pathname = tmp.splice(1, 1) // 正确输出js和html的路径
+    entries[pathname] = entry;
+  });
+  
+  return entries;
+}
+
+var pages = getEntry('./src/pages/**/index.html');
+for(var pathname in pages){
+	// 配置生成的html文件，定义路径等
+	const conf = {
+		filename: pathname + '.html',
+		template: pages[pathname], //模板路径
+		inject: true, //js插入位置
+		chunks: [pathname],
+		chunksSortMode: 'dependency'
+	};
+	console.log(conf.filename)
+	devWebpackConfig.plugins.push(new HtmlWebpackPlugin(conf));
+}
+
 
 module.exports = new Promise((resolve, reject) => {
   portfinder.basePort = process.env.PORT || config.dev.port
